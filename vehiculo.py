@@ -1,50 +1,51 @@
-
 class Vehiculo:
-    """Molde que representa un vehículo eléctrico en el simulador municipal."""
+    def __init__(self, matricula: str, modelo: str, nivel_bateria: float = 100.0, kilometros_totales: float = 0.0):
+        self.matricula = matricula
+        self.modelo = modelo
+        # 1. Atributos protegidos con guion bajo
+        self._nivel_bateria = 100.0
+        self._kilometros_totales = 0.0
+        
+        # Usamos los setters para aplicar las validaciones iniciales
+        self.nivel_bateria = nivel_bateria
+        self.kilometros_totales = kilometros_totales
 
-    def __init__(self, matricula: str, modelo: str, capacidad_kwh: float):
-        # Atributos propios de cada objeto
-        self.matricula: str = matricula
-        self.modelo: str = modelo
-        self.capacidad_kwh: float = capacidad_kwh
-        self.nivel_bateria: float = 100.0
-        self.kilometros_totales: float = 0.0
+    # --- Getter y Setter para nivel_bateria ---
+    @property
+    def nivel_bateria(self) -> float:
+        """Getter: Devuelve el porcentaje de batería actual."""
+        return self._nivel_bateria
 
-    def conducir(self, distancia_km: float) -> bool:
-        """Simula un trayecto urbano. Consume 0.15 kWh por km."""
+    @nivel_bateria.setter
+    def nivel_bateria(self, nuevo_nivel: float) -> None:
+        """Setter: Valida que el nivel se encuentre siempre en el rango [0.0, 100.0]."""
+        if nuevo_nivel < 0.0 or nuevo_nivel > 100.0:
+            raise ValueError(f"Nivel de batería inválido: {nuevo_nivel}%. Debe estar entre 0 y 100.")
+        self._nivel_bateria = nuevo_nivel
 
-        energia_necesaria = distancia_km * 0.15
-        porcentaje_consumido = (
-            energia_necesaria / self.capacidad_kwh
-        ) * 100.0
+    # --- Reto Autónomo: Getter y Setter para kilometros_totales ---
+    @property
+    def kilometros_totales(self) -> float:
+        """Getter: Devuelve los kilómetros acumulados del vehículo."""
+        return self._kilometros_totales
 
-        if self.nivel_bateria >= porcentaje_consumido:
-            self.nivel_bateria -= porcentaje_consumido
-            self.kilometros_totales += distancia_km
-            return True
-        else:
-            return False
+    @kilometros_totales.setter
+    def kilometros_totales(self, nuevos_km: float) -> None:
+        """Setter: Valida que los kilómetros no disminuyan (fraude de odómetro)."""
+        if nuevos_km < self._kilometros_totales:
+            raise ValueError("Los kilómetros no pueden disminuir (fraude de odómetro).")
+        self._kilometros_totales = nuevos_km
 
-    def obtener_estado(self) -> str:
-        """Devuelve una ficha con el estado del vehículo."""
-
-        return (
-            f"[{self.matricula}] {self.modelo} | "
-            f"Batería: {self.nivel_bateria:.1f}% | "
-            f"Total: {self.kilometros_totales} km"
-        )
-
-    def recargar(self, energia_kwh: float) -> float:
-        """Recarga la batería sin superar el 100%."""
-
-        porcentaje_recarga = (
-            energia_kwh / self.capacidad_kwh
-        ) * 100.0
-
-        self.nivel_bateria += porcentaje_recarga
-
-        # Evitamos superar el límite físico de la batería
-        if self.nivel_bateria > 100.0:
-            self.nivel_bateria = 100.0
-
-        return self.nivel_bateria
+    # --- Método actualizar para usar atributos protegidos/propiedades ---
+    def conducir(self, km: float) -> None:
+        """Simula la conducción consumiendo batería y sumando kilómetros."""
+        if km <= 0:
+            raise ValueError("Los kilómetros a recorrer deben ser positivos.")
+        
+        # Ejemplo simple de consumo (1% de batería por cada 5 km, por ejemplo)
+        consumo = km * 0.2 
+        nuevo_nivel = self._nivel_bateria - consumo
+        
+        # Actualizamos usando las propiedades para mantener las validaciones
+        self.nivel_bateria = max(0.0, nuevo_nivel)
+        self.kilometros_totales = self._kilometros_totales + km
